@@ -1,0 +1,42 @@
+# -----------------------
+# Ory Kratos Dockerfile
+# Author: SpaceProject
+# -----------------------
+
+FROM ubuntu:focal
+
+LABEL maintainer="SpaceProject <docker-images@our-space.xyz>"
+
+# Install dependencies
+COPY ./get-dependencies.sh /get-dependencies.sh
+RUN chmod +x /get-dependencies.sh
+RUN /get-dependencies.sh && rm /get-dependencies.sh
+
+# Install NodeJS
+COPY ./setup-nodejs.sh /setup-nodejs.sh
+RUN chmod +x /setup-nodejs.sh
+RUN /setup-nodejs.sh && rm /setup-nodejs.sh
+
+RUN useradd -s /bin/bash -m -d /home/kratos kratos
+RUN mkdir -p /home/kratos/bin /home/kratos/config
+
+# Install Kratos
+COPY ./setup-kratos.sh /setup-kratos.sh
+RUN chmod +x /setup-kratos.sh
+RUN /setup-kratos.sh && rm /setup-kratos.sh
+
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+COPY ./debugstart.sh /debugstart.sh
+RUN chmod +x /debugstart.sh
+
+RUN chown -R kratos:kratos /home/kratos
+
+USER kratos
+WORKDIR /home/kratos
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/home/kratos/bin/kratos", "serve", "-c", "/home/kratos/config/kratos.yml"]
+
+## DEBUG
+## Run with `docker run -it --rm --entrypoint /bin/bash`

@@ -1,0 +1,38 @@
+version: "3.8"
+networks:
+  ory-internal: #Internal network for containers to communicate
+    external: false
+  ory: #External network for containers to communicate with outside world
+    external: true
+services:
+  postgres-kratos: #Postgres container for Kratos
+    image: postgres:13.2
+    restart: always
+    environment:
+      POSTGRES_USER: ory
+      POSTGRES_PASSWORD: ory
+      POSTGRES_DB: kratos
+    volumes:
+      - kratos:/var/lib/postgresql/data
+    networks:
+      - ory-internal
+  kratos: #Kratos container
+    depends_on:
+      - postgres-kratos
+    image: spaceproject/ory-kratos:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ory
+      POSTGRES_PASSWORD: ory
+      POSTGRES_DBNAME: kratos
+      POSTGRES_HOST: postgres-kratos
+      POSTGRES_PORT: 5432
+    networks:
+      - ory-internal
+      - ory
+    ports:
+      - 4433:4433
+      - 4434:4434
+      - 4435:4435
+volumes:
+  kratos: #Volume for Kratos data
