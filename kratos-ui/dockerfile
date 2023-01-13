@@ -30,4 +30,4 @@ RUN chown -R uinode:uinode /opt/uinode
 USER uinode
 WORKDIR /opt/uinode/ui
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/usr/bin/npm start"]
+CMD ["/usr/bin/npm", "start"]

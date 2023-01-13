@@ -8,13 +8,9 @@ FROM nginx:latest
 LABEL maintainer="SpaceProject <docker-images@our-space.xyz>"
 
 # Copy nginx files
-COPY ./nginx/ory-kratos-ui.conf.template /etc/nginx/templates/ory-kratos-ui.conf.template
-COPY ./nginx/ory-kratos.conf.template /etc/nginx/templates/ory-kratos.conf.template
-
-# Install dependencies
-COPY ./install-certbot.sh /install-certbot.sh
-RUN chmod +x /install-certbot.sh
-RUN /install-certbot.sh && rm /install-certbot.sh
+COPY ./nginx/ory.conf.template /etc/nginx/templates/ory.conf.template
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy entrypoint
 COPY ./pre-entrypoint.sh /pre-entrypoint.sh

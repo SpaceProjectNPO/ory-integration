@@ -11,7 +11,7 @@ services:
     environment:
       POSTGRES_USER: ory
       POSTGRES_PASSWORD: ory
-      POSTGRES_DB: kratos
+      POSTGRES_DB: ory
     volumes:
       - kratos:/var/lib/postgresql/data
     networks:
@@ -80,22 +80,36 @@ services:
       - 8443:3000 # Public UI port
   proxy:
     depends_on:
-      - kratos-ui
+      - kratos_ui
     image: spaceproject/ory-proxy:latest
     restart: always
     environment:
       DOMAIN: accounts.example.com # REPLACE_ME
-      CERTBOT_EMAIL: certs@example.com # REPLACE_ME
     networks:
       - ory
     ports:
       - 80:80 # HTTP port
       - 443:443 # HTTPS port
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_challenges:/var/www/certbot
+  certbot:
+    depends_on:
+      - proxy
+    image: certbot/certbot
+    restart: always
+    environment:
+      # Certbot configuration
+      CERTBOT_EMAIL: certs@example.com # REPLACE_ME
+      CERTBOT_DOMAINS: accounts.example.com # REPLACE_ME
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_challenges:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot certonly --webroot --webroot-path=/var/www/certbot --agree-tos --non-interactive --email $${CERTBOT_EMAIL} -d $${CERTBOT_DOMAINS}; sleep 12h & wait $${!}; done;'"
 volumes:
-  kratos: # Mount as folder for Kratos data
-    driver: local
-    # Folder located on host /ory/kratos/data
-    driver_opts:
-      type: none
-      device: /ory/kratos/data
-      o: bind
+  kratos: #Volume for Kratos Postgres data, must be persistent
+    external: false
+  certbot_conf: #Volume for Certbot data, must be persistent
+    external: false
+  certbot_challenges: #Volume for Certbot challenges, must be persistent
+    external: false
