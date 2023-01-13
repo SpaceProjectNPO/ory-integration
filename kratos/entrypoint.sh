@@ -41,7 +41,7 @@ if ! psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DBN
 	psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DBNAME -c "SELECT pg_reload_conf()"
 fi
 
-sed -i "s|dsn: memory|dsn: postgres://$POSTGRES_USER@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DBNAME?sslmode=disable|g" /home/kratos/config/kratos.yml
+/env-replace.sh
 
 /home/kratos/bin/kratos -c /home/kratos/config/kratos.yml migrate sql -y postgres://"$POSTGRES_USER":"$POSTGRES_PASSWORD"@"$POSTGRES_HOST":"$POSTGRES_PORT"/"$POSTGRES_DBNAME"?sslmode=disable
 

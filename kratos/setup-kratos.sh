@@ -14,3 +14,5 @@ wget https://raw.githubusercontent.com/ory/kratos/v0.11.0/contrib/quickstart/kra
 
 # Change default location of identity schema
 sed -i 's|file:///etc/config/kratos/identity.schema.json|file:///home/kratos/config/identity.schema.json|g' kratos.yml
+# Disable logging of sentitive values
+sed -i 's|log_sensitive_values: true|log_sensitive_values: false|g' kratos.yml

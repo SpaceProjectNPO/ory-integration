@@ -5,7 +5,7 @@ networks:
   ory: #External network for containers to communicate with outside world
     external: true
 services:
-  postgres-kratos: #Postgres container for Kratos
+  postgres_kratos: #Postgres container for Kratos
     image: postgres:13.2
     restart: always
     environment:
@@ -18,21 +18,84 @@ services:
       - ory-internal
   kratos: #Kratos container
     depends_on:
-      - postgres-kratos
+      - postgres_kratos
     image: spaceproject/ory-kratos:latest
     restart: always
     environment:
+      # Postgres configuration
       POSTGRES_USER: ory
       POSTGRES_PASSWORD: ory
       POSTGRES_DBNAME: kratos
-      POSTGRES_HOST: postgres-kratos
+      POSTGRES_HOST: postgres_kratos
       POSTGRES_PORT: 5432
+
+      # Kratos configuration (kratos.yml)
+      ## serve.public.base_url (String)
+      PUBLIC_BASEURL: https://accounts.example.com/ # REPLACE_ME
+      ## selfservice.default_browser_return_url (String)
+      SELF_SERVICE_DEFAULT_BROWSER_RETURN_URL: https://accounts.example.com/auth/ # REPLACE_ME
+      ## selfservice.allowed_return_urls (Array)
+      SELF_SERVICE_ALLOWED_RETURN_URLS: https://accounts.example.com/ # REPLACE_ME, add more if needed separated with ; and no spaces ## Currently only one is allowed
+      ## selfservice.flows.error_ui_url (String)
+      SELF_SERVICE_FLOWS_ERROR_UI_URL: https://accounts.example.com/auth/errors # REPLACE_ME
+      ## selfservice.flows.settings_ui_url (String)
+      SELF_SERVICE_FLOWS_SETTINGS_UI_URL: https://accounts.example.com/auth/settings # REPLACE_ME
+      ## selfservice.flows.recovery_enabled (Boolean)
+      SELF_SERVICE_FLOWS_RECOVERY_ENABLED: "true" ## Currently not applied
+      ## selfservice.flows.recovery_ui_url (String)
+      SELF_SERVICE_FLOWS_RECOVERY_UI_URL: https://accounts.example.com/auth/recovery # REPLACE_ME
+      ## selfservice.flows.verification_enabled (Boolean)
+      SELF_SERVICE_FLOWS_VERIFICATION_ENABLED: "true" ## Currently not applied
+      ## selfservice.flows.verification_ui_url (String)
+      SELF_SERVICE_FLOWS_VERIFICATION_UI_URL: https://accounts.example.com/auth/verification # REPLACE_ME
+      ## selfservice.flows.verification.after.default_browser_return_url (String)
+      SELF_SERVICE_FLOWS_VERIFICATION_AFTER: https://accounts.example.com/auth/ # REPLACE_ME
+      ## selfservice.flows.logout.after.default_browser_return_url (String)
+      SELF_SERVICE_FLOWS_LOGOUT_AFTER: https://accounts.example.com/auth/login # REPLACE_ME
+      ## selfservice.flows.login.ui_url (String)
+      SELF_SERVICE_FLOWS_LOGIN_UI_URL: https://accounts.example.com/auth/login # REPLACE_ME
+      ## selfservice.flows.login.lifespan (Duration)
+      SELF_SERVICE_FLOWS_LOGIN_LIFESPAN: 10m
+      ## selfservice.flows.registration.ui_url (String)
+      SELF_SERVICE_FLOWS_REGISTRATION_UI_URL: https://accounts.example.com/auth/registration # REPLACE_ME
     networks:
       - ory-internal
       - ory
     ports:
-      - 4433:4433
-      - 4434:4434
-      - 4435:4435
+      - 4433:4433 # Public API port
+      - 4434:4434 # Admin API port
+  kratos_ui:
+    depends_on:
+      - kratos
+    image: spaceproject/ory-kratos-ui:latest
+    restart: always
+    environment:
+      # Kratos Public API
+      KRATOS_PUBLIC_URL: http://kratos:4433
+      # Proxied Public API
+      KRATOS_BROWSER_URL: https://accounts.example.com/ # REPLACE_ME
+    networks:
+      - ory
+    ports:
+      - 8443:3000 # Public UI port
+  proxy:
+    depends_on:
+      - kratos-ui
+    image: spaceproject/ory-proxy:latest
+    restart: always
+    environment:
+      DOMAIN: accounts.example.com # REPLACE_ME
+      CERTBOT_EMAIL: certs@example.com # REPLACE_ME
+    networks:
+      - ory
+    ports:
+      - 80:80 # HTTP port
+      - 443:443 # HTTPS port
 volumes:
-  kratos: #Volume for Kratos data
+  kratos: # Mount as folder for Kratos data
+    driver: local
+    # Folder located on host /ory/kratos/data
+    driver_opts:
+      type: none
+      device: /ory/kratos/data
+      o: bind
