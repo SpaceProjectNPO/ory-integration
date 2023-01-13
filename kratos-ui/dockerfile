@@ -1,0 +1,33 @@
+# -----------------------
+# Ory Kratos UI Dockerfile
+# Author: SpaceProject
+# -----------------------
+
+FROM ubuntu:focal
+
+LABEL maintainer="SpaceProject <docker-images@our-space.xyz>"
+
+# Install dependencies
+COPY ./get-dependencies.sh /get-dependencies.sh
+RUN chmod +x /get-dependencies.sh
+RUN /get-dependencies.sh && rm /get-dependencies.sh
+
+# Install NodeJS
+COPY ./setup-nodejs.sh /setup-nodejs.sh
+RUN chmod +x /setup-nodejs.sh
+RUN /setup-nodejs.sh && rm /setup-nodejs.sh
+
+# Install Kratos-UI
+COPY ./setup-kratos-ui.sh /setup-kratos-ui.sh
+RUN chmod +x /setup-kratos-ui.sh
+RUN /setup-kratos-ui.sh && rm /setup-kratos-ui.sh
+
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+RUN chown -R uinode:uinode /opt/uinode
+
+USER uinode
+WORKDIR /opt/uinode/ui
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/bin/npm start"]
