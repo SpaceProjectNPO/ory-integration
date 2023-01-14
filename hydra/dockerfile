@@ -1,0 +1,25 @@
+# -----------------------
+# Ory Hydra Dockerfile
+# Author: SpaceProject
+# -----------------------
+
+FROM oryd/hydra:v2.0.3
+
+LABEL maintainer="SpaceProject <docker-images@our-space.xyz>"
+
+USER root
+
+# Install dependencies
+RUN apk add --no-cache --update \
+	bash \
+	curl \
+	jq \
+	postgresql-client \
+	&& rm -rf /var/cache/apk/*
+
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+USER ory
+ENTRYPOINT ["bash","/entrypoint.sh"]
+CMD ["/usr/bin/hydra", "serve", "all"]

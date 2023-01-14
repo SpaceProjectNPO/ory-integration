@@ -11,9 +11,20 @@ services:
     environment:
       POSTGRES_USER: ory
       POSTGRES_PASSWORD: ory
-      POSTGRES_DB: ory
+      POSTGRES_DB: kratos
     volumes:
       - kratos:/var/lib/postgresql/data
+    networks:
+      - ory-internal
+  postgres_hydra: #Postgres container for Hydra
+    image: postgres:13.2
+    restart: always
+    environment:
+      POSTGRES_USER: ory
+      POSTGRES_PASSWORD: ory
+      POSTGRES_DB: hydra
+    volumes:
+      - hydra:/var/lib/postgresql/data
     networks:
       - ory-internal
   kratos: #Kratos container
@@ -60,7 +71,6 @@ services:
       SELF_SERVICE_FLOWS_REGISTRATION_UI_URL: https://accounts.example.com/auth/registration # REPLACE_ME
     networks:
       - ory-internal
-      - ory
     ports:
       - 4433:4433 # Public API port
       - 4434:4434 # Admin API port
@@ -76,8 +86,35 @@ services:
       KRATOS_BROWSER_URL: https://accounts.example.com/ # REPLACE_ME
     networks:
       - ory
+      - ory-internal
     ports:
       - 8443:3000 # Public UI port
+  hydra:
+    depends_on:
+      - postgres_hydra
+      - kratos
+    image: spaceproject/ory-hydra:latest
+    ports:
+      - 5444:4444 # Public API port
+      - 5445:4445 # Admin API port
+    restart: always
+    environment:
+      #Postgres configuration
+      POSTGRES_USER: ory
+      POSTGRES_PASSWORD: ory
+      POSTGRES_DBNAME: hydra
+      POSTGRES_HOST: postgres_hydra
+      POSTGRES_PORT: 5432
+
+      # Hydra configuration (environment variables)
+      URLS_SELF_ISSUER: https://accounts.example.com/ # REPLACE_ME
+      URLS_CONSENT: https://accounts.example.com/auth/consent # REPLACE_ME
+      URLS_LOGIN: https://accounts.example.com/auth/login # REPLACE_ME
+
+      # Secrets
+      SECRETS_SYSTEM: :W9?C&Y32LRBP;rRp<?& # REPLACE_ME
+    networks:
+      - ory-internal
   proxy:
     depends_on:
       - kratos_ui
@@ -85,8 +122,10 @@ services:
     restart: always
     environment:
       DOMAIN: accounts.example.com # REPLACE_ME
+      OAUTH_DOMAIN: oauth2.example.com # REPLACE_ME
     networks:
       - ory
+      - ory-internal
     ports:
       - 80:80 # HTTP port
       - 443:443 # HTTPS port
@@ -101,15 +140,27 @@ services:
     environment:
       # Certbot configuration
       CERTBOT_EMAIL: certs@example.com # REPLACE_ME
-      CERTBOT_DOMAINS: accounts.example.com # REPLACE_ME
+      CERTBOT_DOMAINS: accounts.example.com,oauth2.example.com # REPLACE_ME
     volumes:
       - certbot_conf:/etc/letsencrypt
       - certbot_challenges:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot certonly --webroot --webroot-path=/var/www/certbot --agree-tos --non-interactive --email $${CERTBOT_EMAIL} -d $${CERTBOT_DOMAINS}; sleep 12h & wait $${!}; done;'"
 volumes:
   kratos: #Volume for Kratos Postgres data, must be persistent
-    external: false
+    driver: local
+    driver_opts:
+      device: /srv/docker/kratos_postgres
+      o: bind
+    
+  hydra: #Volume for Hydra Postgres data, must be persistent
+    driver: local
+    driver_opts:
+      device: /srv/docker/hydra_postgres
+      o: bind
   certbot_conf: #Volume for Certbot data, must be persistent
-    external: false
+    driver: local
+    driver_opts:
+      device: /srv/docker/certbot
+      o: bind
   certbot_challenges: #Volume for Certbot challenges, must be persistent
     external: false

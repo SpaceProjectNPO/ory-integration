@@ -15,10 +15,6 @@ upstream ui_node {
 server {
 	listen 80;
 	server_name ${DOMAIN};
-
-	location /.well-known/acme-challenge/ {
-		root /var/www/certbot;
-	}
 	if ($host = ${DOMAIN}) {
 		return 301 https://$host$request_uri;
 	}
@@ -26,7 +22,6 @@ server {
 
 server {
 	listen 443 ssl;
-	listen [::]:443 ssl;
 	server_name ${DOMAIN};
 
 	ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
@@ -85,5 +80,9 @@ server {
 	# Catch if 401/unauthorized and redirect for login
 	location @error401 {
 		return 302 https://${DOMAIN}/auth/login;
+	}
+
+	location /.well-known/acme-challenge/ {
+		root /var/www/certbot;
 	}
 }
