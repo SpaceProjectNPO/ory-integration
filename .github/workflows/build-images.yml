@@ -7,6 +7,7 @@ on:
     paths:
       - hydra/**
       - kratos/**
+      - kratosui-custom/**
 jobs:
   build-push:
     name: "Build ${{ matrix.image }} image"
@@ -17,6 +18,7 @@ jobs:
         image:
           - hydra
           - kratos
+          - kratosui-custom
     steps:
       - uses: actions/checkout@v3
       - uses: docker/setup-qemu-action@v2

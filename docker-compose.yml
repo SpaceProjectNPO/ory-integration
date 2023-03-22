@@ -25,6 +25,9 @@ services:
     restart: always
     links:
       - postgres_kratos:postgres_kratos
+    ports:
+      - "4433:4433"
+      - "4434:4434"
     environment:
       # Postgres configuration
       POSTGRES_USER: ory
@@ -80,15 +83,17 @@ services:
   kratos_ui:
     depends_on:
       - kratos
-    image: spaceproject/ory-kratos-ui:latest
+    image: ghcr.io/spaceprojectnpo/ory-kratosui-custom:latest
     restart: always
     links:
       - kratos:kratos
     ports:
       - "9843:3000"
+    networks:
+      - ory
     environment:
       # Kratos Public API
-      KRATOS_PUBLIC_URL: http://kratos:4433
+      KRATOS_PUBLIC_URL: https://accounts.${BASE_DOMAIN}/api/admin/
       # Proxied Public API
       KRATOS_BROWSER_URL: https://accounts.${BASE_DOMAIN}/ 
 
@@ -100,6 +105,9 @@ services:
     links:
       - postgres_hydra:postgres_hydra
       - kratos:kratos
+    ports:
+      - "4444:4444"
+      - "4445:4445"
     restart: always
     environment:
       #Postgres configuration
