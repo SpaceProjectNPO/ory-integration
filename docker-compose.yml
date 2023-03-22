@@ -163,7 +163,7 @@ services:
 
       # Hydra configuration (environment variables)
       ## serve.cookies.same_site_mode (String)
-      SERVE_COOKIES_SAME_SITE_MODE: lax
+      SERVE_COOKIES_SAME_SITE_MODE: Lax
 
       ## urls.self.issuer (String)
       URLS_SELF_ISSUER: https://oauth2.${BASE_DOMAIN}/ 
