@@ -1,9 +1,4 @@
-version: "3.8"
-networks:
-  ory-internal: #Internal network for containers to communicate
-    external: false
-  ory: #External network for containers to communicate with outside world
-    external: true
+version: "3.3"
 services:
   postgres_kratos: #Postgres container for Kratos
     image: postgres:13.2
@@ -13,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ory
       POSTGRES_DB: kratos
     volumes:
-      - kratos:/var/lib/postgresql/data
+      - /srv/docker/kratos_postgres:/var/lib/postgresql/data
     networks:
       - ory-internal
   postgres_hydra: #Postgres container for Hydra
@@ -24,13 +19,13 @@ services:
       POSTGRES_PASSWORD: ory
       POSTGRES_DB: hydra
     volumes:
-      - hydra:/var/lib/postgresql/data
+      - /srv/docker/hydra_postgres:/var/lib/postgresql/data
     networks:
       - ory-internal
   kratos: #Kratos container
     depends_on:
       - postgres_kratos
-    image: spaceproject/ory-kratos:latest
+    image: ghcr.io/spaceprojectnpo/ory-kratos:latest
     restart: always
     environment:
       # Postgres configuration
@@ -40,35 +35,35 @@ services:
       POSTGRES_HOST: postgres_kratos
       POSTGRES_PORT: 5432
 
-      # Kratos configuration (kratos.yml)
+      # Kratos configuration (by environment variables)
       ## serve.public.base_url (String)
-      PUBLIC_BASEURL: https://accounts.example.com/ # REPLACE_ME
+      SERVE_PUBLIC_BASE_URL: https://accounts.${BASE_DOMAIN}/
       ## selfservice.default_browser_return_url (String)
-      SELF_SERVICE_DEFAULT_BROWSER_RETURN_URL: https://accounts.example.com/auth/ # REPLACE_ME
+      SELFSERVICE_DEFAULT_BROWSER_RETURN_URL: https://accounts.${BASE_DOMAIN}/auth/
       ## selfservice.allowed_return_urls (Array)
-      SELF_SERVICE_ALLOWED_RETURN_URLS: https://accounts.example.com/ # REPLACE_ME, add more if needed separated with ; and no spaces ## Currently only one is allowed
+      SELFSERVICE_ALLOWED_RETURN_URLS: "[https://accounts.${BASE_DOMAIN}/]"
       ## selfservice.flows.error_ui_url (String)
-      SELF_SERVICE_FLOWS_ERROR_UI_URL: https://accounts.example.com/auth/errors # REPLACE_ME
+      SELFSERVICE_FLOW_ERROR_UI_URL: https://accounts.${BASE_DOMAIN}/auth/errors
       ## selfservice.flows.settings_ui_url (String)
-      SELF_SERVICE_FLOWS_SETTINGS_UI_URL: https://accounts.example.com/auth/settings # REPLACE_ME
+      SELFSERVICE_FLOWS_SETTINGS_UI_URL: https://accounts.${BASE_DOMAIN}/auth/settings
       ## selfservice.flows.recovery_enabled (Boolean)
-      SELF_SERVICE_FLOWS_RECOVERY_ENABLED: "true" ## Currently not applied
+      SELFSERVICE_FLOWS_RECOVERY_ENABLED: "true"
       ## selfservice.flows.recovery_ui_url (String)
-      SELF_SERVICE_FLOWS_RECOVERY_UI_URL: https://accounts.example.com/auth/recovery # REPLACE_ME
+      SELFSERVICE_FLOWS_RECOVERY_UI_URL: https://accounts.${BASE_DOMAIN}/auth/recovery
       ## selfservice.flows.verification_enabled (Boolean)
-      SELF_SERVICE_FLOWS_VERIFICATION_ENABLED: "true" ## Currently not applied
+      SELFSERVICE_FLOWS_VERIFICATION_ENABLED: "true"
       ## selfservice.flows.verification_ui_url (String)
-      SELF_SERVICE_FLOWS_VERIFICATION_UI_URL: https://accounts.example.com/auth/verification # REPLACE_ME
+      SELFSERVICE_FLOWS_VERIFICATION_UI_URL: https://accounts.${BASE_DOMAIN}/auth/verification
       ## selfservice.flows.verification.after.default_browser_return_url (String)
-      SELF_SERVICE_FLOWS_VERIFICATION_AFTER: https://accounts.example.com/auth/ # REPLACE_ME
+      SELFSERVICE_FLOWS_VERIFICATION_AFTER_DEFAULT_BROWSER_RETURN_URL: https://accounts.${BASE_DOMAIN}/auth/
       ## selfservice.flows.logout.after.default_browser_return_url (String)
-      SELF_SERVICE_FLOWS_LOGOUT_AFTER: https://accounts.example.com/auth/login # REPLACE_ME
+      SELFSERVICE_FLOWS_LOGOUT_AFTER_DEFAULT_BROWSER_RETURN_URL: https://accounts.${BASE_DOMAIN}/auth/
       ## selfservice.flows.login.ui_url (String)
-      SELF_SERVICE_FLOWS_LOGIN_UI_URL: https://accounts.example.com/auth/login # REPLACE_ME
+      SELFSERVICE_FLOWS_LOGIN_UI_URL: https://accounts.${BASE_DOMAIN}/auth/login
       ## selfservice.flows.login.lifespan (Duration)
-      SELF_SERVICE_FLOWS_LOGIN_LIFESPAN: 10m
+      SELFSERVICE_FLOWS_LOGIN_LIFESPAN: 10m
       ## selfservice.flows.registration.ui_url (String)
-      SELF_SERVICE_FLOWS_REGISTRATION_UI_URL: https://accounts.example.com/auth/registration # REPLACE_ME
+      SELFSERVICE_FLOWS_REGISTRATION_UI_URL: https://accounts.${BASE_DOMAIN}/auth/registration
     networks:
       - ory-internal
     ports:
@@ -83,7 +78,7 @@ services:
       # Kratos Public API
       KRATOS_PUBLIC_URL: http://kratos:4433
       # Proxied Public API
-      KRATOS_BROWSER_URL: https://accounts.example.com/ # REPLACE_ME
+      KRATOS_BROWSER_URL: https://accounts.${BASE_DOMAIN}/ 
     networks:
       - ory
       - ory-internal
@@ -93,7 +88,7 @@ services:
     depends_on:
       - postgres_hydra
       - kratos
-    image: spaceproject/ory-hydra:latest
+    image: ghcr.io/spaceprojectnpo/ory-hydra:latest
     ports:
       - 5444:4444 # Public API port
       - 5445:4445 # Admin API port
@@ -107,60 +102,39 @@ services:
       POSTGRES_PORT: 5432
 
       # Hydra configuration (environment variables)
-      URLS_SELF_ISSUER: https://accounts.example.com/ # REPLACE_ME
-      URLS_CONSENT: https://accounts.example.com/auth/consent # REPLACE_ME
-      URLS_LOGIN: https://accounts.example.com/auth/login # REPLACE_ME
+      URLS_SELF_ISSUER: https://accounts.${BASE_DOMAIN}/ 
+      URLS_CONSENT: https://accounts.${BASE_DOMAIN}/auth/consent 
+      URLS_LOGIN: https://accounts.${BASE_DOMAIN}/auth/login 
 
       # Secrets
-      SECRETS_SYSTEM: :W9?C&Y32LRBP;rRp<?& # REPLACE_ME
+      SECRETS_SYSTEM: ${HYDRA_SYSTEM_SECRET}
     networks:
       - ory-internal
-  proxy:
-    depends_on:
-      - kratos_ui
-    image: spaceproject/ory-proxy:latest
-    restart: always
-    environment:
-      DOMAIN: accounts.example.com # REPLACE_ME
-      OAUTH_DOMAIN: oauth2.example.com # REPLACE_ME
-    networks:
-      - ory
-      - ory-internal
-    ports:
-      - 80:80 # HTTP port
-      - 443:443 # HTTPS port
-    volumes:
-      - certbot_conf:/etc/letsencrypt
-      - certbot_challenges:/var/www/certbot
-  certbot:
-    depends_on:
-      - proxy
-    image: certbot/certbot
-    restart: always
-    environment:
-      # Certbot configuration
-      CERTBOT_EMAIL: certs@example.com # REPLACE_ME
-      CERTBOT_DOMAINS: accounts.example.com,oauth2.example.com # REPLACE_ME
-    volumes:
-      - certbot_conf:/etc/letsencrypt
-      - certbot_challenges:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot certonly --webroot --webroot-path=/var/www/certbot --agree-tos --non-interactive --email $${CERTBOT_EMAIL} -d $${CERTBOT_DOMAINS}; sleep 12h & wait $${!}; done;'"
-volumes:
-  kratos: #Volume for Kratos Postgres data, must be persistent
-    driver: local
-    driver_opts:
-      device: /srv/docker/kratos_postgres
-      o: bind
+
+networks:
+  ory: # create a network for the public facing services
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.5.0/16"
+  ory-internal:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.4.0/16"
+#volumes:
+#  kratos: #Volume for Kratos Postgres data, must be persistent
+#    driver: local
+#    driver_opts:
+#      type: none
+#      device: /srv/docker/kratos_postgres
+#      o: bind
     
-  hydra: #Volume for Hydra Postgres data, must be persistent
-    driver: local
-    driver_opts:
-      device: /srv/docker/hydra_postgres
-      o: bind
-  certbot_conf: #Volume for Certbot data, must be persistent
-    driver: local
-    driver_opts:
-      device: /srv/docker/certbot
-      o: bind
-  certbot_challenges: #Volume for Certbot challenges, must be persistent
-    external: false
+#  hydra: #Volume for Hydra Postgres data, must be persistent
+#    driver: local
+#    driver_opts:
+#      type: none
+#      device: /srv/docker/hydra_postgres
+#      o: bind

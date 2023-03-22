@@ -21,7 +21,7 @@ if [ -z "$POSTGRES_DBNAME" ]; then
 	exit 1
 fi
 export PGPASSWORD=$POSTGRES_PASSWORD
-echo "All Database variables are set"
+echo "All environment variables are set, Starting..."
 
 POSTGRES_UP=`pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER`
 
@@ -41,8 +41,8 @@ if ! psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DBN
 	psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DBNAME -c "SELECT pg_reload_conf()"
 fi
 
-export DSN=postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DBNAME?sslmode=disable
+/env-replace.sh
 
-/usr/bin/kratos migrate sql -y $DSN
+/home/kratos/bin/kratos -c /home/kratos/config/kratos.yml migrate sql -y postgres://"$POSTGRES_USER":"$POSTGRES_PASSWORD"@"$POSTGRES_HOST":"$POSTGRES_PORT"/"$POSTGRES_DBNAME"?sslmode=disable
 
 exec "$@"
