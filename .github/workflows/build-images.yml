@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - hydra/**
+      - kratos/**
 jobs:
   build-push:
     name: "Build ${{ matrix.image }} image"

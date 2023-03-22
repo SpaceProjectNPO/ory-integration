@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   postgres_kratos: #Postgres container for Kratos
-    image: postgres:13.2
+    image: postgres:15.2-alpine
     restart: always
     environment:
       POSTGRES_USER: ory
@@ -12,7 +12,7 @@ services:
     networks:
       - ory-internal
   postgres_hydra: #Postgres container for Hydra
-    image: postgres:13.2
+    image: postgres:15.2-alpine
     restart: always
     environment:
       POSTGRES_USER: ory
@@ -38,6 +38,10 @@ services:
       # Kratos configuration (by environment variables)
       ## serve.public.base_url (String)
       SERVE_PUBLIC_BASE_URL: https://accounts.${BASE_DOMAIN}/
+      ## serve.public.cors.enabled (Boolean)
+      SERVE_PUBLIC_CORS_ENABLED: "true"
+      ## serve.admin.base_url (String)
+      SERVE_ADMIN_BASE_URL: http://kratos:4434/
       ## selfservice.default_browser_return_url (String)
       SELFSERVICE_DEFAULT_BROWSER_RETURN_URL: https://accounts.${BASE_DOMAIN}/auth/
       ## selfservice.allowed_return_urls (Array)
@@ -64,6 +68,16 @@ services:
       SELFSERVICE_FLOWS_LOGIN_LIFESPAN: 10m
       ## selfservice.flows.registration.ui_url (String)
       SELFSERVICE_FLOWS_REGISTRATION_UI_URL: https://accounts.${BASE_DOMAIN}/auth/registration
+      ## secrets.cookie (Array)
+      SECRETS_COOKIE: ${KRATOS_COOKIE_SECRET}
+      ## secrets.cipher (Array)
+      SECRETS_CIPHER: ${KRATOS_CIPHER_SECRET}
+      ## identity.default_schema_id (String)
+      IDENTITY_DEFAULT_SCHEMA_ID: default
+      ## identity.schemas (Array)
+      IDENTITY_SCHEMAS: '[{"id":"default","url":"${KRATOS_IDENTITY_SCHEMA}"}]'
+      ## courier.smtp.connection_uri (String)
+      COURIER_SMTP_CONNECTION_URI: smtps://${SMTP_USER}:${SMTP_PASSWORD}@${SMTP_HOST}:${SMTP_PORT}/?skip_ssl_verify=true
     networks:
       - ory-internal
     ports:
