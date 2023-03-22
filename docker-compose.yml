@@ -37,49 +37,97 @@ services:
       POSTGRES_PORT: 5432
 
       # Kratos configuration (by environment variables)
+      ## version (String)
+      VERSION: v0.11.0
+
       ## serve.public.base_url (String)
       SERVE_PUBLIC_BASE_URL: https://accounts.${BASE_DOMAIN}/
       ## serve.public.cors.enabled (Boolean)
       SERVE_PUBLIC_CORS_ENABLED: "true"
       ## serve.admin.base_url (String)
-      SERVE_ADMIN_BASE_URL: http://kratos:4434/
+      SERVE_ADMIN_BASE_URL: https://accounts.${BASE_DOMAIN}/admin
+
       ## selfservice.default_browser_return_url (String)
       SELFSERVICE_DEFAULT_BROWSER_RETURN_URL: https://accounts.${BASE_DOMAIN}/auth/
       ## selfservice.allowed_return_urls (Array)
-      SELFSERVICE_ALLOWED_RETURN_URLS: "[https://accounts.${BASE_DOMAIN}/]"
-      ## selfservice.flows.error_ui_url (String)
-      SELFSERVICE_FLOW_ERROR_UI_URL: https://accounts.${BASE_DOMAIN}/auth/errors
-      ## selfservice.flows.settings_ui_url (String)
+      SELFSERVICE_ALLOWED_RETURN_URLS_0: https://accounts.${BASE_DOMAIN}
+
+      ## selfservice.methods.password.enabled (Boolean)
+      SELFSERVICE_METHODS_PASSWORD_ENABLED: true
+      ## selfservice.methods.totp.enabled (Boolean)
+      SELFSERVICE_METHODS_TOTP_ENABLED: true
+      ## selfservice.methods.totp.config.issuer (String)
+      SELFSERVICE_METHODS_TOTP_CONFIG_ISSUER: ${BASE_DOMAIN}
+      ## selfservice.methods.lookup_secret.enabled (Boolean)
+      SELFSERVICE_METHODS_LOOKUP_SECRET_ENABLED: true
+      ## selfservice.methods.link.enabled (Boolean)
+      SELFSERVICE_METHODS_LINK_ENABLED: true
+      ## selfservice.methods.code.enabled (Boolean)
+      SELFSERVICE_METHODS_CODE_ENABLED: true
+
+      ## selfservice.flows.error.ui_url (String)
+      SELFSERVICE_FLOWS_ERROR_UI_URL: https://accounts.${BASE_DOMAIN}/auth/errors
+
+      ## selfservice.flows.settings.ui_url (String)
       SELFSERVICE_FLOWS_SETTINGS_UI_URL: https://accounts.${BASE_DOMAIN}/auth/settings
-      ## selfservice.flows.recovery_enabled (Boolean)
-      SELFSERVICE_FLOWS_RECOVERY_ENABLED: "true"
-      ## selfservice.flows.recovery_ui_url (String)
+      ## selfservice.flows.settings.required_aal (String)
+      SELFSERVICE_FLOWS_SETTINGS_REQUIRED_AAL: highest_available
+
+      ## selfservice.flows.recovery.enabled (Boolean)
+      SELFSERVICE_FLOWS_RECOVERY_ENABLED: true
+      ## selfservice.flows.recovery.ui_url (String)
       SELFSERVICE_FLOWS_RECOVERY_UI_URL: https://accounts.${BASE_DOMAIN}/auth/recovery
-      ## selfservice.flows.verification_enabled (Boolean)
-      SELFSERVICE_FLOWS_VERIFICATION_ENABLED: "true"
-      ## selfservice.flows.verification_ui_url (String)
+
+      ## selfservice.flows.verification.enabled (Boolean)
+      SELFSERVICE_FLOWS_VERIFICATION_ENABLED: true
+      ## selfservice.flows.verification.ui_url (String)
       SELFSERVICE_FLOWS_VERIFICATION_UI_URL: https://accounts.${BASE_DOMAIN}/auth/verification
       ## selfservice.flows.verification.after.default_browser_return_url (String)
-      SELFSERVICE_FLOWS_VERIFICATION_AFTER_DEFAULT_BROWSER_RETURN_URL: https://accounts.${BASE_DOMAIN}/auth/
+      SELFSERVICE_FLOWS_VERIFICATION_AFTER_DEFAULT_BROWSER_RETURN_URL: https://accounts.${BASE_DOMAIN}/auth
+
       ## selfservice.flows.logout.after.default_browser_return_url (String)
-      SELFSERVICE_FLOWS_LOGOUT_AFTER_DEFAULT_BROWSER_RETURN_URL: https://accounts.${BASE_DOMAIN}/auth/
+      SELFSERVICE_FLOWS_LOGOUT_AFTER_DEFAULT_BROWSER_RETURN_URL: https://accounts.${BASE_DOMAIN}/auth/login
+
       ## selfservice.flows.login.ui_url (String)
       SELFSERVICE_FLOWS_LOGIN_UI_URL: https://accounts.${BASE_DOMAIN}/auth/login
       ## selfservice.flows.login.lifespan (Duration)
       SELFSERVICE_FLOWS_LOGIN_LIFESPAN: 10m
+
       ## selfservice.flows.registration.ui_url (String)
       SELFSERVICE_FLOWS_REGISTRATION_UI_URL: https://accounts.${BASE_DOMAIN}/auth/registration
+      ## selfservice.flows.registration.lifespan (Duration)
+      SELFSERVICE_FLOWS_REGISTRATION_LIFESPAN: 10m
+      ## selfservice.flows.registration.after.password.hooks (Array)
+      SELFSERVICE_FLOWS_REGISTRATION_AFTER_PASSWORD_HOOKS_0_hook: session
+
+      ## log.level (String)
+      LOG_LEVEL: debug
+      ## log.format (String)
+      LOG_FORMAT: text
+      ## log.leak_sensitive_values (Boolean)
+      LOG_LEAK_SENSITIVE_VALUES: true
+
       ## secrets.cookie (Array)
-      SECRETS_COOKIE: ${KRATOS_COOKIE_SECRET}
+      SECRETS_COOKIE_0: ${KRATOS_COOKIE_SECRET}
       ## secrets.cipher (Array)
-      SECRETS_CIPHER: ${KRATOS_CIPHER_SECRET}
+      SECRETS_CIPHER_0: ${KRATOS_CIPHER_SECRET}
+
+      ## ciphers.algorithm (String)
+      CIPHERS_ALGORITHM: xchacha20-poly1305
+
+      ## hashers.algorithm (String)
+      HASHERS_ALGORITHM: bcrypt
+      ## hashers.bcrypt.cost (Integer)
+      HASHERS_BCRYPT_COST: 12
+
       ## identity.default_schema_id (String)
       IDENTITY_DEFAULT_SCHEMA_ID: default
       ## identity.schemas (Array)
       IDENTITY_SCHEMAS: '[{"id":"default","url":"${KRATOS_IDENTITY_SCHEMA}"}]'
+
       ## courier.smtp.connection_uri (String)
       COURIER_SMTP_CONNECTION_URI: smtps://${SMTP_USER}:${SMTP_PASSWORD}@${SMTP_HOST}:${SMTP_PORT}/?skip_ssl_verify=true
-    
+
   kratos_ui:
     depends_on:
       - kratos
@@ -89,13 +137,9 @@ services:
       - kratos:kratos
     ports:
       - "9843:3000"
-    networks:
-      - ory
     environment:
-      # Kratos Public API
-      KRATOS_PUBLIC_URL: https://accounts.${BASE_DOMAIN}/api/admin/
-      # Proxied Public API
-      KRATOS_BROWSER_URL: https://accounts.${BASE_DOMAIN}/ 
+      KRATOS_PUBLIC_URL: https://accounts.${BASE_DOMAIN}
+      KRATOS_BROWSER_URL: https://accounts.${BASE_DOMAIN}
 
   hydra:
     depends_on:
@@ -118,13 +162,23 @@ services:
       POSTGRES_PORT: 5432
 
       # Hydra configuration (environment variables)
-      URLS_SELF_ISSUER: https://accounts.${BASE_DOMAIN}/ 
-      URLS_CONSENT: https://accounts.${BASE_DOMAIN}/auth/consent 
-      URLS_LOGIN: https://accounts.${BASE_DOMAIN}/auth/login 
+      ## serve.cookies.same_site_mode (String)
+      SERVE_COOKIES_SAME_SITE_MODE: lax
 
-      # Secrets
-      SECRETS_SYSTEM: ${HYDRA_SYSTEM_SECRET}
+      ## urls.self.issuer (String)
+      URLS_SELF_ISSUER: https://oauth2.${BASE_DOMAIN}/ 
+      ## urls.consent (String)
+      URLS_CONSENT: https://accounts.${BASE_DOMAIN}/consent
+      ## urls.login (String)
+      URLS_LOGIN: https://accounts.${BASE_DOMAIN}/login
+      ## urls.logout (String)
+      URLS_LOGOUT: https://accounts.${BASE_DOMAIN}/logout
 
-networks:
-  ory: # create a network for the public facing services
-    driver: bridge
+      # secrets.system (Array)
+      SECRETS_SYSTEM_0: ${HYDRA_SYSTEM_SECRET}
+
+      ## oidc.subject_identifiers.supported_types (Array)
+      OIDC_SUBJECT_IDENTIFIERS_SUPPORTED_TYPES_0: pairwise
+      OIDC_SUBJECT_IDENTIFIERS_SUPPORTED_TYPES_1: public
+      ## oidc.subject_identifiers.pairwise.salt (String)
+      OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT: ${HYDRA_PAIRWISE_SALT}
