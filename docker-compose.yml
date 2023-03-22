@@ -9,8 +9,6 @@ services:
       POSTGRES_DB: kratos
     volumes:
       - /srv/docker/kratos_postgres:/var/lib/postgresql/data
-    networks:
-      - ory-internal
   postgres_hydra: #Postgres container for Hydra
     image: postgres:15.2-alpine
     restart: always
@@ -20,13 +18,13 @@ services:
       POSTGRES_DB: hydra
     volumes:
       - /srv/docker/hydra_postgres:/var/lib/postgresql/data
-    networks:
-      - ory-internal
   kratos: #Kratos container
     depends_on:
       - postgres_kratos
     image: ghcr.io/spaceprojectnpo/ory-kratos:latest
     restart: always
+    links:
+      - postgres_kratos:postgres_kratos
     environment:
       # Postgres configuration
       POSTGRES_USER: ory
@@ -78,34 +76,30 @@ services:
       IDENTITY_SCHEMAS: '[{"id":"default","url":"${KRATOS_IDENTITY_SCHEMA}"}]'
       ## courier.smtp.connection_uri (String)
       COURIER_SMTP_CONNECTION_URI: smtps://${SMTP_USER}:${SMTP_PASSWORD}@${SMTP_HOST}:${SMTP_PORT}/?skip_ssl_verify=true
-    networks:
-      - ory-internal
-    ports:
-      - 4433:4433 # Public API port
-      - 4434:4434 # Admin API port
+    
   kratos_ui:
     depends_on:
       - kratos
     image: spaceproject/ory-kratos-ui:latest
     restart: always
+    links:
+      - kratos:kratos
+    ports:
+      - "9843:3000"
     environment:
       # Kratos Public API
       KRATOS_PUBLIC_URL: http://kratos:4433
       # Proxied Public API
       KRATOS_BROWSER_URL: https://accounts.${BASE_DOMAIN}/ 
-    networks:
-      - ory
-      - ory-internal
-    ports:
-      - 8443:3000 # Public UI port
+
   hydra:
     depends_on:
       - postgres_hydra
       - kratos
     image: ghcr.io/spaceprojectnpo/ory-hydra:latest
-    ports:
-      - 5444:4444 # Public API port
-      - 5445:4445 # Admin API port
+    links:
+      - postgres_hydra:postgres_hydra
+      - kratos:kratos
     restart: always
     environment:
       #Postgres configuration
@@ -122,33 +116,7 @@ services:
 
       # Secrets
       SECRETS_SYSTEM: ${HYDRA_SYSTEM_SECRET}
-    networks:
-      - ory-internal
 
 networks:
   ory: # create a network for the public facing services
     driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: "192.168.5.0/16"
-  ory-internal:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: "192.168.4.0/16"
-#volumes:
-#  kratos: #Volume for Kratos Postgres data, must be persistent
-#    driver: local
-#    driver_opts:
-#      type: none
-#      device: /srv/docker/kratos_postgres
-#      o: bind
-    
-#  hydra: #Volume for Hydra Postgres data, must be persistent
-#    driver: local
-#    driver_opts:
-#      type: none
-#      device: /srv/docker/hydra_postgres
-#      o: bind
