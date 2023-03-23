@@ -131,7 +131,7 @@ services:
   kratos_ui:
     depends_on:
       - kratos
-    image: ghcr.io/spaceprojectnpo/ory-kratosui-custom:latest
+    image: spaceproject/ory-kratos-self-service-ui:latest
     restart: always
     links:
       - kratos:kratos
