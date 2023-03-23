@@ -162,17 +162,22 @@ services:
       POSTGRES_PORT: 5432
 
       # Hydra configuration (environment variables)
+
+      ## serve.admin.host (String)
+      SERVE_ADMIN_HOST: 0.0.0.0
+      ## serve.public.host (String)
+      SERVE_PUBLIC_HOST: 0.0.0.0
       ## serve.cookies.same_site_mode (String)
       SERVE_COOKIES_SAME_SITE_MODE: Lax
 
       ## urls.self.issuer (String)
-      URLS_SELF_ISSUER: https://oauth2.${BASE_DOMAIN}/ 
+      URLS_SELF_ISSUER: https://oauth2.${BASE_DOMAIN}/
       ## urls.consent (String)
-      URLS_CONSENT: https://accounts.${BASE_DOMAIN}/consent
+      URLS_CONSENT: https://accounts.${BASE_DOMAIN}/auth/consent
       ## urls.login (String)
-      URLS_LOGIN: https://accounts.${BASE_DOMAIN}/login
+      URLS_LOGIN: https://accounts.${BASE_DOMAIN}/auth/login
       ## urls.logout (String)
-      URLS_LOGOUT: https://accounts.${BASE_DOMAIN}/logout
+      URLS_LOGOUT: https://accounts.${BASE_DOMAIN}/auth/logout
 
       # secrets.system (Array)
       SECRETS_SYSTEM_0: ${HYDRA_SYSTEM_SECRET}
@@ -182,3 +187,6 @@ services:
       OIDC_SUBJECT_IDENTIFIERS_SUPPORTED_TYPES_1: public
       ## oidc.subject_identifiers.pairwise.salt (String)
       OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT: ${HYDRA_PAIRWISE_SALT}
+
+      ## clients.http.disallow_private_ip_ranges (Boolean)
+      CLIENTS_HTTP_DISALLOW_PRIVATE_IP_RANGES: true
