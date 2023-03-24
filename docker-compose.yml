@@ -163,12 +163,17 @@ services:
 
       # Hydra configuration (environment variables)
 
+      ## serve.tls.enabled (Boolean)
+      SERVE_TLS_ENABLED: false
       ## serve.admin.host (String)
       SERVE_ADMIN_HOST: 0.0.0.0
+      ## serve.admin.tls_enabled (Boolean)
+      SERVE_ADMIN_TLS_ENABLED: false
       ## serve.public.host (String)
       SERVE_PUBLIC_HOST: 0.0.0.0
       ## serve.cookies.same_site_mode (String)
       SERVE_COOKIES_SAME_SITE_MODE: Lax
+      
 
       ## urls.self.issuer (String)
       URLS_SELF_ISSUER: https://oauth2.${BASE_DOMAIN}/
