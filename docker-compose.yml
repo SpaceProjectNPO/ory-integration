@@ -171,12 +171,19 @@ services:
       SERVE_ADMIN_TLS_ENABLED: false
       ## serve.public.host (String)
       SERVE_PUBLIC_HOST: 0.0.0.0
+
       ## serve.cookies.same_site_mode (String)
       SERVE_COOKIES_SAME_SITE_MODE: Lax
-      
+      ## serve.public.cors.enabled (Boolean)
+      SERVE_PUBLIC_CORS_ENABLED: false
 
+      ## self.public (String)
+      SELF_PUBLIC: https://oauth2.${BASE_DOMAIN}
+      ## self.admin (String)
+      SELF_ADMIN: https://oauth2.${BASE_DOMAIN}
+      
       ## urls.self.issuer (String)
-      URLS_SELF_ISSUER: https://oauth2.${BASE_DOMAIN}/
+      URLS_SELF_ISSUER: https://oauth2.${BASE_DOMAIN}
       ## urls.consent (String)
       URLS_CONSENT: https://accounts.${BASE_DOMAIN}/auth/consent
       ## urls.login (String)
