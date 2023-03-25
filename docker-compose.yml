@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.9"
 services:
   postgres_kratos: #Postgres container for Kratos
     image: postgres:15.2-alpine
@@ -135,7 +135,7 @@ services:
     image: spaceproject/ory-kratos-self-service-ui:latest
     restart: always
     links:
-      - kratos:kratos
+      - kratos
     ports:
       - "9843:3000"
     environment:
@@ -147,15 +147,14 @@ services:
     depends_on:
       - postgres_hydra
       - kratos
-      - jaeger
     image: ghcr.io/spaceprojectnpo/ory-hydra:latest
     links:
       - postgres_hydra
-      - jaeger
     ports:
       - "4444:4444"
       - "4445:4445"
     restart: always
+    command: /usr/bin/hydra serve all --dev
     environment:
       #Postgres configuration
       POSTGRES_USER: ory
@@ -181,6 +180,12 @@ services:
       SERVE_COOKIES_SAME_SITE_MODE: Lax
       ## serve.public.cors.enabled (Boolean)
       SERVE_PUBLIC_CORS_ENABLED: false
+      ## serve.public.cors.allowed_methods (Array)
+      SERVE_PUBLIC_CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
+      ## serve.admin.cors.enabled (Boolean)
+      SERVE_ADMIN_CORS_ENABLED: false
+      ## serve.admin.cors.allowed_methods (Array)
+      SERVE_ADMIN_CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
 
       ## self.public (String)
       SELF_PUBLIC: https://oauth2.${BASE_DOMAIN}
@@ -197,34 +202,24 @@ services:
       URLS_LOGOUT: https://accounts.${BASE_DOMAIN}/auth/logout
 
       # secrets.system (Array)
-      SECRETS_SYSTEM_0: ${HYDRA_SYSTEM_SECRET}
+      SECRETS_SYSTEM: ${HYDRA_SYSTEM_SECRET}
 
       ## oidc.subject_identifiers.supported_types (Array)
-      OIDC_SUBJECT_IDENTIFIERS_SUPPORTED_TYPES_0: pairwise
-      OIDC_SUBJECT_IDENTIFIERS_SUPPORTED_TYPES_1: public
+      OIDC_SUBJECT_IDENTIFIERS_SUPPORTED_TYPES: pairwise,public
       ## oidc.subject_identifiers.pairwise.salt (String)
       OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT: ${HYDRA_PAIRWISE_SALT}
 
       ## clients.http.disallow_private_ip_ranges (Boolean)
-      CLIENTS_HTTP_DISALLOW_PRIVATE_IP_RANGES: true
+      CLIENTS_HTTP_DISALLOW_PRIVATE_IP_RANGES: false
 
       ##tracing.provider (String)
       TRACING_PROVIDER: jaeger
       ##tracing.providers.jaeger.sampling_server_url (String)
-      TRACING_PROVIDERS_JAEGER_SAMPLING_SERVER_URL: http://jaeger:5778/sampling
+      TRACING_PROVIDERS_JAEGER_SAMPLING_SERVER_URL: http://${INTERNAL_DOMAIN}:5778/sampling
       ##tracing.providers.jaeger.local_agent_address (String)
-      TRACING_PROVIDERS_JAEGER_LOCAL_AGENT_ADDRESS: jaeger:6831
+      TRACING_PROVIDERS_JAEGER_LOCAL_AGENT_ADDRESS: ${INTERNAL_DOMAIN}:6831
       ##tracing.providers.jaeger.sampling_type (String)
       TRACING_PROVIDERS_JAEGER_SAMPLING_TYPE: const
       ##tracing.providers.jaeger.sampling_value (Float64)
       TRACING_PROVIDERS_JAEGER_SAMPLING_VALUE: 1
 
-
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    restart: on-failure
-    ports:
-      - 5775:5775/udp
-      - 6831:6831/udp
-      - 6832:6832/udp
-      - 16686:16686 # Web App GUI to see traces
