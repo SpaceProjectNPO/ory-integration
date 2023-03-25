@@ -1,4 +1,4 @@
-version: "3.3"
+version: "3.8"
 services:
   postgres_kratos: #Postgres container for Kratos
     image: postgres:15.2-alpine
@@ -19,12 +19,13 @@ services:
     volumes:
       - /srv/docker/hydra_postgres:/var/lib/postgresql/data
   kratos: #Kratos container
+    container_name: accounts.${BASE_DOMAIN}
     depends_on:
       - postgres_kratos
     image: ghcr.io/spaceprojectnpo/ory-kratos:latest
     restart: always
     links:
-      - postgres_kratos:postgres_kratos
+      - postgres_kratos
     ports:
       - "4433:4433"
       - "4434:4434"
@@ -142,13 +143,15 @@ services:
       KRATOS_BROWSER_URL: https://accounts.${BASE_DOMAIN}
 
   hydra:
+    container_name: oauth2.${BASE_DOMAIN}
     depends_on:
       - postgres_hydra
       - kratos
+      - jaeger
     image: ghcr.io/spaceprojectnpo/ory-hydra:latest
     links:
-      - postgres_hydra:postgres_hydra
-      - kratos:kratos
+      - postgres_hydra
+      - jaeger
     ports:
       - "4444:4444"
       - "4445:4445"
@@ -162,6 +165,8 @@ services:
       POSTGRES_PORT: 5432
 
       # Hydra configuration (environment variables)
+
+      LOG_LEVEL: debug
 
       ## serve.tls.enabled (Boolean)
       SERVE_TLS_ENABLED: false
@@ -202,3 +207,24 @@ services:
 
       ## clients.http.disallow_private_ip_ranges (Boolean)
       CLIENTS_HTTP_DISALLOW_PRIVATE_IP_RANGES: true
+
+      ##tracing.provider (String)
+      TRACING_PROVIDER: jaeger
+      ##tracing.providers.jaeger.sampling_server_url (String)
+      TRACING_PROVIDERS_JAEGER_SAMPLING_SERVER_URL: http://jaeger:5778/sampling
+      ##tracing.providers.jaeger.local_agent_address (String)
+      TRACING_PROVIDERS_JAEGER_LOCAL_AGENT_ADDRESS: jaeger:6831
+      ##tracing.providers.jaeger.sampling_type (String)
+      TRACING_PROVIDERS_JAEGER_SAMPLING_TYPE: const
+      ##tracing.providers.jaeger.sampling_value (Float64)
+      TRACING_PROVIDERS_JAEGER_SAMPLING_VALUE: 1
+
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    restart: on-failure
+    ports:
+      - 5775:5775/udp
+      - 6831:6831/udp
+      - 6832:6832/udp
+      - 16686:16686 # Web App GUI to see traces
