@@ -1,4 +1,6 @@
 version: "3.9"
+networks:
+  ory:
 services:
   postgres_kratos: #Postgres container for Kratos
     image: postgres:15.2-alpine
@@ -7,6 +9,8 @@ services:
       POSTGRES_USER: ory
       POSTGRES_PASSWORD: ory
       POSTGRES_DB: kratos
+    networks:
+      - ory
     volumes:
       - /srv/docker/kratos_postgres:/var/lib/postgresql/data
   postgres_hydra: #Postgres container for Hydra
@@ -16,6 +20,8 @@ services:
       POSTGRES_USER: ory
       POSTGRES_PASSWORD: ory
       POSTGRES_DB: hydra
+    networks:
+      - ory
     volumes:
       - /srv/docker/hydra_postgres:/var/lib/postgresql/data
   kratos: #Kratos container
@@ -25,10 +31,12 @@ services:
     image: ghcr.io/spaceprojectnpo/ory-kratos:latest
     restart: always
     links:
-      - postgres_kratos
+      - postgres_kratos:postgres_kratos
     ports:
       - "4433:4433"
       - "4434:4434"
+    networks:
+      - ory
     environment:
       # Postgres configuration
       POSTGRES_USER: ory
@@ -134,11 +142,10 @@ services:
       - kratos
     image: spaceproject/ory-kratos-self-service-ui:latest
     restart: always
-    links:
-      - kratos
     ports:
       - "9843:3000"
     environment:
+      BASE_PATH : https://accounts.${BASE_DOMAIN}/auth
       KRATOS_PUBLIC_URL: https://accounts.${BASE_DOMAIN}
       KRATOS_BROWSER_URL: https://accounts.${BASE_DOMAIN}
 
@@ -149,12 +156,13 @@ services:
       - kratos
     image: ghcr.io/spaceprojectnpo/ory-hydra:latest
     links:
-      - postgres_hydra
+      - postgres_hydra:postgres_hydra
     ports:
       - "4444:4444"
       - "4445:4445"
+    networks:
+      - ory
     restart: always
-    command: /usr/bin/hydra serve all --dev
     environment:
       #Postgres configuration
       POSTGRES_USER: ory
@@ -162,19 +170,17 @@ services:
       POSTGRES_DBNAME: hydra
       POSTGRES_HOST: postgres_hydra
       POSTGRES_PORT: 5432
+      # Set Host
+      HOST_DOMAIN: oauth2.${BASE_DOMAIN}
 
       # Hydra configuration (environment variables)
 
-      LOG_LEVEL: debug
+      LOG_LEVEL: ${HYDRA_LOG_LEVEL}
 
       ## serve.tls.enabled (Boolean)
-      SERVE_TLS_ENABLED: false
-      ## serve.admin.host (String)
-      SERVE_ADMIN_HOST: 0.0.0.0
+      SERVE_TLS_ENABLED: true
       ## serve.admin.tls_enabled (Boolean)
-      SERVE_ADMIN_TLS_ENABLED: false
-      ## serve.public.host (String)
-      SERVE_PUBLIC_HOST: 0.0.0.0
+      SERVE_ADMIN_TLS_ENABLED: true
 
       ## serve.cookies.same_site_mode (String)
       SERVE_COOKIES_SAME_SITE_MODE: Lax
@@ -188,9 +194,9 @@ services:
       SERVE_ADMIN_CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
 
       ## self.public (String)
-      SELF_PUBLIC: https://oauth2.${BASE_DOMAIN}
+      #SELF_PUBLIC: https://oauth2.${BASE_DOMAIN}
       ## self.admin (String)
-      SELF_ADMIN: https://oauth2.${BASE_DOMAIN}
+      #SELF_ADMIN: https://oauth2.${BASE_DOMAIN}
       
       ## urls.self.issuer (String)
       URLS_SELF_ISSUER: https://oauth2.${BASE_DOMAIN}
@@ -222,4 +228,15 @@ services:
       TRACING_PROVIDERS_JAEGER_SAMPLING_TYPE: const
       ##tracing.providers.jaeger.sampling_value (Float64)
       TRACING_PROVIDERS_JAEGER_SAMPLING_VALUE: 1
-
+      
+  hydra-proxy:
+    links:
+      - hydra:hydra
+    image: spaceproject/ory-hydra-proxy:latest
+    restart: always
+    ports:
+      - "4446:443"
+    networks:
+      - ory
+    environment:
+      OAUTH_DOMAIN: oauth2.${BASE_DOMAIN}

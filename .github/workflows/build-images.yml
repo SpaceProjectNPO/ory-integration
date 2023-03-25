@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
     paths:
       - hydra/**
       - kratos/**
@@ -37,4 +38,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/spaceprojectnpo/ory-${{ matrix.image }}:latest
+            ghcr.io/spaceprojectnpo/ory-${{ matrix.image }}:${{ github.ref_name == 'main' && 'latest' || github.ref_name }}

@@ -45,4 +45,12 @@ export DSN=postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES
 
 /usr/bin/hydra migrate sql -y $DSN
 
+if [ -z "$HOST_DOMAIN" ]; then
+	echo "HOST_DOMAIN is not set"
+	exit 1
+fi
+# Set the server domain as the host domain using /etc/hosts
+sed -i "s/localhost/$HOST_DOMAIN/g" /etc/hosts
+
+
 exec "$@"

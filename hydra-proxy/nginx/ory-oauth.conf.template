@@ -1,0 +1,48 @@
+upstream public_oauth {
+	server hydra:4444;
+}
+upstream admin_oauth {
+	server hydra:4445;
+}
+
+server {
+		listen 80;
+		server_name ${OAUTH_DOMAIN};
+		if ($host = ${OAUTH_DOMAIN}) {
+				return 301 https://$host$request_uri;
+		}
+}
+server {
+	listen 443 ssl;
+	server_name ${OAUTH_DOMAIN};
+
+	ssl_certificate /etc/letsencrypt/live/${OAUTH_DOMAIN}/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/${OAUTH_DOMAIN}/privkey.pem;
+	#include /etc/letsencrypt/options-ssl-nginx.conf;
+	#ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+	location /.well-known/acme-challenge/ {
+		root /var/www/certbot;
+	}
+
+	location ~ ^/(oauth2/auth|oauth2/token|oauth2/revoke|oauth2/fallbacks/consent|oauth2/fallbacks/error|userinfo)/? {
+	   proxy_pass https://public_oauth;
+	   proxy_redirect          off;
+	   proxy_set_header        Host            ${OAUTH_DOMAIN};
+	   proxy_set_header        X-Real-IP       $remote_addr;
+	   proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+	   proxy_set_header        X-Forwarded-Proto $http_x_forwarded_proto;
+
+   }
+   location ~ ^/(clients|keys|health|metrics|version|oauth2/auth/requests|oauth2/introspect|oauth2/flush)/? {
+	   rewrite /admin/(.*) /$1  break;
+
+	   proxy_pass https://admin_oauth;
+	   proxy_redirect          off;
+	   proxy_set_header        Host            ${OAUTH_DOMAIN};
+	   proxy_set_header        X-Real-IP       $remote_addr;
+	   proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+	   proxy_set_header        X-Forwarded-Proto $http_x_forwarded_proto;
+   }
+   
+}
