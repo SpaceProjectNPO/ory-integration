@@ -28,7 +28,7 @@ services:
     container_name: accounts.${BASE_DOMAIN}
     depends_on:
       - postgres_kratos
-    image: ghcr.io/spaceprojectnpo/ory-kratos:latest
+    image: ghcr.io/spaceprojectnpo/ory-kratos:${KRATOS_VERSION}
     restart: always
     links:
       - postgres_kratos:postgres_kratos
@@ -154,7 +154,7 @@ services:
     depends_on:
       - postgres_hydra
       - kratos
-    image: ghcr.io/spaceprojectnpo/ory-hydra:latest
+    image: ghcr.io/spaceprojectnpo/ory-hydra:${HYDRA_VERSION}
     links:
       - postgres_hydra:postgres_hydra
     ports:
@@ -178,26 +178,23 @@ services:
       LOG_LEVEL: ${HYDRA_LOG_LEVEL}
 
       ## serve.tls.enabled (Boolean)
-      SERVE_TLS_ENABLED: true
+      SERVE_TLS_ENABLED: false
       ## serve.admin.tls_enabled (Boolean)
-      SERVE_ADMIN_TLS_ENABLED: true
+      SERVE_ADMIN_TLS_ENABLED: false
 
       ## serve.cookies.same_site_mode (String)
       SERVE_COOKIES_SAME_SITE_MODE: Lax
       ## serve.public.cors.enabled (Boolean)
-      SERVE_PUBLIC_CORS_ENABLED: false
+      #SERVE_PUBLIC_CORS_ENABLED: false
       ## serve.public.cors.allowed_methods (Array)
-      SERVE_PUBLIC_CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
+      #SERVE_PUBLIC_CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
       ## serve.admin.cors.enabled (Boolean)
-      SERVE_ADMIN_CORS_ENABLED: false
+      #SERVE_ADMIN_CORS_ENABLED: false
       ## serve.admin.cors.allowed_methods (Array)
-      SERVE_ADMIN_CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
+      #SERVE_ADMIN_CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
 
-      ## self.public (String)
-      #SELF_PUBLIC: https://oauth2.${BASE_DOMAIN}
-      ## self.admin (String)
-      #SELF_ADMIN: https://oauth2.${BASE_DOMAIN}
-      
+      ##urls.self.public (String)
+      URLS_SELF_PUBLIC: https://oauth2.${BASE_DOMAIN}
       ## urls.self.issuer (String)
       URLS_SELF_ISSUER: https://oauth2.${BASE_DOMAIN}
       ## urls.consent (String)
@@ -216,27 +213,16 @@ services:
       OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT: ${HYDRA_PAIRWISE_SALT}
 
       ## clients.http.disallow_private_ip_ranges (Boolean)
-      CLIENTS_HTTP_DISALLOW_PRIVATE_IP_RANGES: false
-
-      ##tracing.provider (String)
-      TRACING_PROVIDER: jaeger
-      ##tracing.providers.jaeger.sampling_server_url (String)
-      TRACING_PROVIDERS_JAEGER_SAMPLING_SERVER_URL: http://${INTERNAL_DOMAIN}:5778/sampling
-      ##tracing.providers.jaeger.local_agent_address (String)
-      TRACING_PROVIDERS_JAEGER_LOCAL_AGENT_ADDRESS: ${INTERNAL_DOMAIN}:6831
-      ##tracing.providers.jaeger.sampling_type (String)
-      TRACING_PROVIDERS_JAEGER_SAMPLING_TYPE: const
-      ##tracing.providers.jaeger.sampling_value (Float64)
-      TRACING_PROVIDERS_JAEGER_SAMPLING_VALUE: 1
+      #CLIENTS_HTTP_DISALLOW_PRIVATE_IP_RANGES: false
       
-  hydra-proxy:
-    links:
-      - hydra:hydra
-    image: spaceproject/ory-hydra-proxy:latest
-    restart: always
-    ports:
-      - "4446:443"
-    networks:
-      - ory
-    environment:
-      OAUTH_DOMAIN: oauth2.${BASE_DOMAIN}
+  #hydra-proxy:
+  #  links:
+  #    - hydra:hydra
+  #  image: spaceproject/ory-hydra-proxy:latest
+  #  restart: always
+  #  ports:
+  #    - "4446:443"
+  #  networks:
+  #    - ory
+  #  environment:
+  #    OAUTH_DOMAIN: oauth2.${BASE_DOMAIN}

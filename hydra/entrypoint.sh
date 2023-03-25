@@ -23,19 +23,19 @@ fi
 export PGPASSWORD=$POSTGRES_PASSWORD
 echo "All Database variables are set"
 
-POSTGRES_UP=`pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER`
+POSTGRES_UP=$(pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER)
 
 if [ $POSTGRES_UP -ne 0 ]; then
 	echo "Postgres is not up and running"
 	exit 1
 fi
 
-if ! psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DBNAME -c '\l' | grep $POSTGRES_DBNAME > /dev/null 2>&1; then
+if ! psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DBNAME -c '\l' | grep $POSTGRES_DBNAME >/dev/null 2>&1; then
 	echo "Database $POSTGRES_DBNAME does not exist, creating it"
 	psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -c "CREATE DATABASE $POSTGRES_DBNAME"
 fi
 
-if ! psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DBNAME -c 'SHOW password_encryption' | grep scram-sha-256 > /dev/null 2>&1; then
+if ! psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DBNAME -c 'SHOW password_encryption' | grep scram-sha-256 >/dev/null 2>&1; then
 	echo "Database encryption is not scram-sha-256, changing it"
 	psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DBNAME -c "ALTER DATABASE $POSTGRES_DBNAME SET password_encryption = 'scram-sha-256'"
 	psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DBNAME -c "SELECT pg_reload_conf()"
@@ -44,13 +44,5 @@ fi
 export DSN=postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DBNAME?sslmode=disable
 
 /usr/bin/hydra migrate sql -y $DSN
-
-if [ -z "$HOST_DOMAIN" ]; then
-	echo "HOST_DOMAIN is not set"
-	exit 1
-fi
-# Set the server domain as the host domain using /etc/hosts
-sed -i "s/localhost/$HOST_DOMAIN/g" /etc/hosts
-
 
 exec "$@"

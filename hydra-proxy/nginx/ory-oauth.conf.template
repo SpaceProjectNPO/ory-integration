@@ -4,14 +4,6 @@ upstream public_oauth {
 upstream admin_oauth {
 	server hydra:4445;
 }
-
-server {
-		listen 80;
-		server_name ${OAUTH_DOMAIN};
-		if ($host = ${OAUTH_DOMAIN}) {
-				return 301 https://$host$request_uri;
-		}
-}
 server {
 	listen 443 ssl;
 	server_name ${OAUTH_DOMAIN};
@@ -26,7 +18,7 @@ server {
 	}
 
 	location ~ ^/(oauth2/auth|oauth2/token|oauth2/revoke|oauth2/fallbacks/consent|oauth2/fallbacks/error|userinfo)/? {
-	   proxy_pass https://public_oauth;
+	   proxy_pass http://public_oauth;
 	   proxy_redirect          off;
 	   proxy_set_header        Host            ${OAUTH_DOMAIN};
 	   proxy_set_header        X-Real-IP       $remote_addr;
@@ -37,7 +29,8 @@ server {
    location ~ ^/(clients|keys|health|metrics|version|oauth2/auth/requests|oauth2/introspect|oauth2/flush)/? {
 	   rewrite /admin/(.*) /$1  break;
 
-	   proxy_pass https://admin_oauth;
+
+	   proxy_pass http://admin_oauth;
 	   proxy_redirect          off;
 	   proxy_set_header        Host            ${OAUTH_DOMAIN};
 	   proxy_set_header        X-Real-IP       $remote_addr;
