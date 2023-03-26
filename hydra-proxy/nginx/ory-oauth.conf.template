@@ -18,24 +18,23 @@ server {
 	}
 
 	location ~ ^/(oauth2/auth|oauth2/token|oauth2/revoke|oauth2/fallbacks/consent|oauth2/fallbacks/error|userinfo)/? {
-	   proxy_pass http://public_oauth;
-	   proxy_redirect          off;
-	   proxy_set_header        Host            ${OAUTH_DOMAIN};
-	   proxy_set_header        X-Real-IP       $remote_addr;
-	   proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-	   proxy_set_header        X-Forwarded-Proto $http_x_forwarded_proto;
+		proxy_pass http://public_oauth;
+		proxy_redirect off;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
 
-   }
-   location ~ ^/(clients|keys|health|metrics|version|oauth2/auth/requests|oauth2/introspect|oauth2/flush)/? {
-	   rewrite /admin/(.*) /$1  break;
+	}
+	#location ~ ^/(clients|keys|health|metrics|version|oauth2/auth/requests|oauth2/introspect|oauth2/flush|admin)/? {
+	location ~ ^/(admin/clients|admin/keys|health|metrics|version|admin/oauth2/auth/requests|admin/oauth2/introspect)/? {
 
+		proxy_pass http://admin_oauth;
+		proxy_redirect off;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+	}
 
-	   proxy_pass http://admin_oauth;
-	   proxy_redirect          off;
-	   proxy_set_header        Host            ${OAUTH_DOMAIN};
-	   proxy_set_header        X-Real-IP       $remote_addr;
-	   proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-	   proxy_set_header        X-Forwarded-Proto $http_x_forwarded_proto;
-   }
-   
 }

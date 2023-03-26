@@ -3,7 +3,7 @@
 # Author: SpaceProject
 # -----------------------
 
-FROM oryd/hydra:v1.11.10
+FROM oryd/hydra:v2.0.3
 
 LABEL maintainer="SpaceProject <docker-images@our-space.xyz>"
 
