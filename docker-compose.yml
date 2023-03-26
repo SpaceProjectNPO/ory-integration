@@ -140,7 +140,7 @@ services:
       ## oauth2_provider.headers (Array)
       OAUTH2_PROVIDER_HEADERS_AUTHORIZATION: Bearer ${KRATOS_OAUTH2_PROVIDER_SECRET}
       ## oauth2_provider.url (String)
-      OAUTH2_PROVIDER_URL: https://oauth2.${BASE_DOMAIN}/oauth2
+      OAUTH2_PROVIDER_URL: https://oauth2.${BASE_DOMAIN}
   kratos_ui:
     depends_on:
       - kratos
