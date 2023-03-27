@@ -52,9 +52,19 @@ services:
       ## serve.public.base_url (String)
       SERVE_PUBLIC_BASE_URL: https://accounts.${BASE_DOMAIN}/
       ## serve.public.cors.enabled (Boolean)
-      SERVE_PUBLIC_CORS_ENABLED: "true"
+      SERVE_PUBLIC_CORS_ENABLED: true
+      ## serve.public.cors.allowed_origins (Array)
+      SERVE_PUBLIC_CORS_ALLOWED_ORIGINS_0: https://accounts.${BASE_DOMAIN}
+      SERVE_PUBLIC_CORS_ALLOWED_ORIGINS_1: https://kratosadmin.${BASE_DOMAIN}
+      SERVE_PUBLIC_CORS_ALLOWED_ORIGINS_2: https://oauth2.${BASE_DOMAIN}
       ## serve.admin.base_url (String)
       SERVE_ADMIN_BASE_URL: https://accounts.${BASE_DOMAIN}/admin
+      ## serve.admin.cors.enabled (Boolean)
+      SERVE_ADMIN_CORS_ENABLED: true
+      ## serve.admin.cors.allowed_origins (Array)
+      SERVE_ADMIN_CORS_ALLOWED_ORIGINS_0: https://accounts.${BASE_DOMAIN}
+      SERVE_ADMIN_CORS_ALLOWED_ORIGINS_1: https://kratosadmin.${BASE_DOMAIN}
+      SERVE_ADMIN_CORS_ALLOWED_ORIGINS_2: https://oauth2.${BASE_DOMAIN}
 
       ## selfservice.default_browser_return_url (String)
       SELFSERVICE_DEFAULT_BROWSER_RETURN_URL: https://accounts.${BASE_DOMAIN}/auth/
@@ -152,7 +162,7 @@ services:
     environment:
       BASE_PATH : https://accounts.${BASE_DOMAIN}/auth
       KRATOS_PUBLIC_URL: https://accounts.${BASE_DOMAIN}
-      KRATOS_ADMIN_URL: https://accounts.${BASE_DOMAIN}/admin
+      KRATOS_ADMIN_URL: https://accounts.${BASE_DOMAIN}
       KRATOS_BROWSER_URL: https://accounts.${BASE_DOMAIN}
       HYDRA_ADMIN_URL: https://oauth2.${BASE_DOMAIN}
 
@@ -233,3 +243,26 @@ services:
       - ory
     environment:
       OAUTH_DOMAIN: oauth2.${BASE_DOMAIN}
+  ## Wating for hydra-admin-ui to be updated (dockerize needs some extra features)
+  #hydra-admin:
+  #  depends_on:
+  #    - hydra
+  #  image: spaceproject/ory-hydra-admin-ui:latest
+  #  restart: always
+  #  ports:
+  #    - "4447:80"
+  #  environment:
+  #    PORT: 3000 ## Do not move, this is internal to the container
+  #    HYDRA_PROXY_URL: https://oauth2.${BASE_DOMAIN}
+  #    HYDRA_ADMIN_URL: https://oauth2.${BASE_DOMAIN}
+  #    PUBLIC_URL: https://oauth2.${BASE_DOMAIN}
+  kratos-admin:
+    depends_on:
+      - kratos
+    image: spaceproject/ory-kratos-admin-ui:latest
+    restart: always
+    ports:
+      - "9844:80"
+    environment:
+      KRATOS_ADMIN_URL: https://accounts.${BASE_DOMAIN}
+      KRATOS_PUBLIC_URL: https://accounts.${BASE_DOMAIN}

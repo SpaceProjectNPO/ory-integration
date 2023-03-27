@@ -18,6 +18,7 @@ jobs:
       matrix:
         image:
           - hydra
+          - hydra-proxy
           - kratos
           - kratosui-custom
     steps:
