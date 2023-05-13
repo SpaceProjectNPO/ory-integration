@@ -5,6 +5,10 @@ This is a simple [ory](https://ory.sh) stack integration for use in many other p
 ## Usage
 
 Just run `docker-compose up` and you should be good to go with a fully functional ory stack.
+> **Warning**
+> Please make sure to secure your admin endpoints properly and run behind a proxy that enables SSL
+> without it all your users will be at risk
+> for more information please visit Ory's Documentation on Self-Hosting
 
 ## Configuration
 
